@@ -19,10 +19,10 @@ import okhttp3.Response;
  */
 public class DownLoadInterceptor implements Interceptor {
     private static final String TAG = "DownLoadInterceptor";
-    private TaskInfo downLoadBean;
+    private TaskInfo taskInfo;
 
-    public DownLoadInterceptor(TaskInfo downLoadBean) {
-        this.downLoadBean = downLoadBean;
+    public DownLoadInterceptor(TaskInfo taskInfo) {
+        this.taskInfo = taskInfo;
     }
 
     @Override
@@ -35,6 +35,6 @@ public class DownLoadInterceptor implements Interceptor {
         Response  response = chain.proceed(request);
         Log.d(TAG, "响应头  " + response.headers());
         //得到Response  对它的response 进行包装  用我们自己定义的DownLoadResponseBody
-        return response.newBuilder().body(new DownLoadResponseBody(downLoadBean,response.body())).build();
+        return response.newBuilder().body(new DownLoadResponseBody(taskInfo,response.body())).build();
     }
 }

@@ -149,13 +149,13 @@ public class TaskInfo implements DownloadObserable, Serializable {
         }
 
         public TaskInfo build() {
-            TaskInfo downLoadBean = new TaskInfo();
-            downLoadBean.taskId = UUIDutils.uuid();
-            downLoadBean.url = this.url;
-            downLoadBean.directory = this.directory;
-            downLoadBean.fileName = this.fileName;
-            downLoadBean.observers = this.observers;
-            return downLoadBean;
+            TaskInfo taskInfo = new TaskInfo();
+            taskInfo.taskId = UUIDutils.uuid();
+            taskInfo.url = this.url;
+            taskInfo.directory = this.directory;
+            taskInfo.fileName = this.fileName;
+            taskInfo.observers = this.observers;
+            return taskInfo;
         }
     }
 

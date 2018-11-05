@@ -10,6 +10,8 @@ import com.example.tigerdownload.utils.FileUtils;
 import com.example.tigerdownload.utils.ValidFileName;
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import io.reactivex.disposables.Disposable;
@@ -46,12 +48,12 @@ public class DownLoadManager {
     }
 
     //添加任务
-    public DownLoadManager addTask(TaskInfo downLoadBean) {
-        if (downloadMap.containsKey(downLoadBean)) {
-            Log.d(TAG, "下载队列中 已存在任务"+downLoadBean.getTaskId());
+    public DownLoadManager addTask(TaskInfo taskInfo) {
+        if (downloadMap.containsKey(taskInfo)) {
+            Log.d(TAG, "下载队列中 已存在任务"+taskInfo.getTaskId());
         } else {
-            downloadMap.put(downLoadBean.getTaskId(), downLoadBean);
-            Log.d(TAG, "下载队列添加任务成功"+downLoadBean.getTaskId());
+            downloadMap.put(taskInfo.getTaskId(), taskInfo);
+            Log.d(TAG, "下载队列添加任务成功"+taskInfo.getTaskId());
         }
         return this;
     }
@@ -145,44 +147,44 @@ public class DownLoadManager {
     }
 
     //移除观察者
-    public void removeObserver(TaskInfo downLoadBean, DownloadObserver observer) {
-        if (downloadMap.containsKey(downLoadBean.getTaskId())) {
-            downloadMap.get(downLoadBean.getTaskId()).removeObserver(observer);
+    public void removeObserver(TaskInfo taskInfo, DownloadObserver observer) {
+        if (downloadMap.containsKey(taskInfo.getTaskId())) {
+            downloadMap.get(taskInfo.getTaskId()).removeObserver(observer);
         } else {
-            Log.d(TAG,     "下载队列没有此任务  "+downLoadBean.getTaskId());
-            throw new NullPointerException("下载队列没有此任务 " + downLoadBean.getDownloadState());
+            Log.d(TAG,     "下载队列没有此任务  "+taskInfo.getTaskId());
+            throw new NullPointerException("下载队列没有此任务 " + taskInfo.getDownloadState());
         }
     }
 
     //通知观察者
-    public void notifyObserver(TaskInfo downLoadBean) {
-        if (downloadMap.containsKey(downLoadBean.getTaskId())) {
-            downloadMap.get(downLoadBean.getTaskId()).notifyObservers();
+    public void notifyObserver(TaskInfo taskInfo) {
+        if (downloadMap.containsKey(taskInfo.getTaskId())) {
+            downloadMap.get(taskInfo.getTaskId()).notifyObservers();
         } else {
-            Log.d(TAG,      "下载队列没有此任务 "+downLoadBean.getTaskId());
-            throw new NullPointerException("下载队列没有此任务 " + downLoadBean.getDownloadState());
+            Log.d(TAG,      "下载队列没有此任务 "+taskInfo.getTaskId());
+            throw new NullPointerException("下载队列没有此任务 " + taskInfo.getDownloadState());
         }
     }
 
 
     //上面调用的 真是开始下载的
-    private Disposable start(TaskInfo downLoadBean) {
-        Log.d(TAG,      "后台服务要下载的 downloadbean "+downLoadBean.toString());
-        Log.d(TAG,      "start 下载已读   "+downLoadBean.getReadLength());
-        OkHttpClient okHttpClient = new OkHttpClient.Builder().connectTimeout(3, TimeUnit.SECONDS).addInterceptor(new DownLoadInterceptor(downLoadBean)).build();
+    private Disposable start(TaskInfo taskInfo) {
+        Log.d(TAG,      "后台服务要下载的 taskInfo "+taskInfo.toString());
+        Log.d(TAG,      "start 下载已读   "+taskInfo.getReadLength());
+        OkHttpClient okHttpClient = new OkHttpClient.Builder().connectTimeout(3, TimeUnit.SECONDS).addInterceptor(new DownLoadInterceptor(taskInfo)).build();
         //没有传递baseUrl 在path哪里传递全部地址
         Retrofit retrofit = new Retrofit.Builder()
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .client(okHttpClient)
-                .baseUrl(CommonUtils.getBasUrl(downLoadBean.getUrl()))
+                .baseUrl(CommonUtils.getBasUrl(taskInfo.getUrl()))
                 .build();
         DownLoadService service = retrofit.create(DownLoadService.class);
-        return download(service, downLoadBean);
+        return download(service, taskInfo);
     }
 
-    private Disposable download(DownLoadService service, TaskInfo downLoadBean) {
+    private Disposable download(DownLoadService service, TaskInfo taskInfo) {
 
-        Disposable disposable = service.download("bytes=" + downLoadBean.getReadLength() + "-", downLoadBean.getUrl())
+        Disposable disposable = service.download("bytes=" + taskInfo.getReadLength() + "-", taskInfo.getUrl())
                 .subscribeOn(Schedulers.io())
                 .unsubscribeOn(Schedulers.io())
                 .retryWhen(new RetryWhenNetworkException())
@@ -191,37 +193,43 @@ public class DownLoadManager {
                     public TaskInfo apply(Response<ResponseBody> response) throws Exception {
                         try {
                             okhttp3.Response responseOkHttp = response.raw();
-                            String fileName = ValidFileName.fileName(downLoadBean.getUrl());
+                            //从下载url中解析出文件名字
+                            String fileName = ValidFileName.fileName(taskInfo.getUrl());
                             String extension = null;
+                            //文件返回值类型
                             String mime = responseOkHttp.header("Content-Type");
+                            //如果有的话 找到对应的文件格式
                             if (mime != null && !mime.isEmpty()) {
                                 MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
                                 extension = mimeTypeMap.getExtensionFromMimeType(mime);
                             }
-
+                            //如果文件名为空 则默认为当前时间为准
                             if (fileName.isEmpty()) {
-                                fileName = System.currentTimeMillis() + "";
+                                fileName = CommonUtils.nowTime();
                             }
-
+                            //如果有文件格式的话，以解析的文件格式为准
                             if (extension != null && !extension.isEmpty()) {
                                 int dotPos = fileName.lastIndexOf('.');
+                                // 文件名有无文件格式
                                 if (0 <= dotPos) {
-                                    fileName = fileName.substring(0, dotPos + 1) + extension;
+                                    fileName = fileName.substring(0, dotPos + 1) + extension;//替换
                                 }else {
-                                    fileName = fileName + "." + extension;
+                                    fileName = fileName + "." + extension;//直接加上
                                 }
                             }
-
+                            //如果Content-Disposition 里面有filename 以这个为准
                             String disposition = responseOkHttp.header("Content-Disposition");
                             if (disposition!=null&&!disposition.isEmpty()&&disposition.contains("filename")){
                                 int equal = disposition.lastIndexOf("=");
                                 fileName = disposition.substring(equal + 1);
                             }
-                            Log.d(TAG,       " 文件名字 "+fileName);
-                            if (downLoadBean.getFileName()==null||downLoadBean.getFileName().isEmpty()){
-                                downLoadBean.setFileName(fileName);
+                           //最后 如果用户自定义的 则以用户为准
+                            if (taskInfo.getFileName()==null||taskInfo.getFileName().isEmpty()){
+                                taskInfo.setFileName(fileName);
                             }
-                            File diretory = new File(downLoadBean.getDirectory());
+
+                            Log.d(TAG,       " 文件名字 "+fileName);
+                            File diretory = new File(taskInfo.getDirectory());
                             if (!diretory.exists()){
                                 diretory.mkdirs();
                             }
@@ -232,35 +240,35 @@ public class DownLoadManager {
                                 Log.e("异常:", "response is false");
                                 return null;
                             }
-                            FileUtils.writeCache(responseBody, new File(downLoadBean.getDirectory(),downLoadBean.getFileName()), downLoadBean);
+                            FileUtils.writeCache(responseBody, new File(taskInfo.getDirectory(),taskInfo.getFileName()), taskInfo);
 
                         } catch (IOException e) {
                             Log.e("异常:", e.toString());
                             return null;
                         }
-                        return downLoadBean;
+                        return taskInfo;
                     }
-                }).subscribe(downLoadBeanEnd -> {
-                    disposableMap.remove(downLoadBean.getTaskId());
-                    if (downLoadBeanEnd.getReadLength() < downLoadBeanEnd.getContentLength()) {
-                        downloadMap.get(downLoadBean.getTaskId()).setReadLength(downLoadBeanEnd.getReadLength());
-                        reStartTask(downLoadBean);
-                        Log.d(TAG,       "下载文件不完整  但现在 开始重新下载  "+downLoadBeanEnd.getTaskId());
+                }).subscribe(taskInfoEnd -> {
+                    disposableMap.remove(taskInfo.getTaskId());
+                    if (taskInfoEnd.getReadLength() < taskInfoEnd.getContentLength()) {
+                        downloadMap.get(taskInfo.getTaskId()).setReadLength(taskInfoEnd.getReadLength());
+                        reStartTask(taskInfo);
+                        Log.d(TAG,       "下载文件不完整  但现在 开始重新下载  "+taskInfoEnd.getTaskId());
                     } else {
                         //下载完成  更改状态 通知观察者
-                        downLoadBean.setDownloadState(DownloadState.STATE_FINISH);
-                        Log.d(TAG,       "文件下载完成"+downLoadBean.getTaskId());
-                        notifyObserver(downLoadBean);
+                        taskInfo.setDownloadState(DownloadState.STATE_FINISH);
+                        Log.d(TAG,       "文件下载完成"+taskInfo.getTaskId());
+                        notifyObserver(taskInfo);
                         //看当前是否有等待线程，如果 下载线程数小于两个的情况下
                         waitQueueStart();
                     }
                 }, throwable -> {
-                    Log.d(TAG,       "下载过程异常  id :"+ downLoadBean.getTaskId()+" 已读长度 "+downLoadBean.getReadLength()+" case: "+throwable.toString());
+                    Log.d(TAG,       "下载过程异常  id :"+ taskInfo.getTaskId()+" 已读长度 "+taskInfo.getReadLength()+" case: "+throwable.toString());
                     //下载出现异常  更改状态 通知观察者
-                    disposableMap.remove(downLoadBean.getTaskId());
-                    downLoadBean.setDownloadState(DownloadState.STATE_ERROR);
+                    disposableMap.remove(taskInfo.getTaskId());
+                    taskInfo.setDownloadState(DownloadState.STATE_ERROR);
                     waitQueueStart();
-                    notifyObserver(downLoadBean);
+                    notifyObserver(taskInfo);
                 });
         return disposable;
     }

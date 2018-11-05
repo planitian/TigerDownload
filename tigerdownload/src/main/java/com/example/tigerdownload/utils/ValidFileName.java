@@ -6,6 +6,10 @@ import java.util.regex.Pattern;
 
 public class ValidFileName {
 
+    /**
+     * @param url 下载链接
+     * @return  文件名字
+     */
     public static String fileName(String url){
         if (!TextUtils.isEmpty(url)) {
             int fragment = url.lastIndexOf('#');

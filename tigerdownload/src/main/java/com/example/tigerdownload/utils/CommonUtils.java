@@ -3,6 +3,11 @@ package com.example.tigerdownload.utils;
 import java.io.File;
 
 import java.io.PrintWriter;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.util.Date;
+import java.util.Locale;
 
 public class CommonUtils {
 
@@ -135,5 +140,15 @@ public class CommonUtils {
         String result = url.substring(index+1);
 //        Zprint.log(CommonUtils.class,"下载文件名字",result);
         return result;
+    }
+
+    /**
+     * @return 现在时间的格式化输出
+     */
+    public static String nowTime() {
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HHmmss",Locale.getDefault());
+        Date date = new Date();
+        String time = format.format(date);
+        return time;
     }
 }
