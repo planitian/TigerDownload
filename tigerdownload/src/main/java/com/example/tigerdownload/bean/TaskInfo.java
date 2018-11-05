@@ -38,10 +38,15 @@ public class TaskInfo implements DownloadObserable, Serializable {
      */
     private float downloadSpeed;
 
+    //是否在主线程运行
+    private boolean isRunMainThread;
 
     private TaskInfo() {
     }
 
+    public boolean isRunMainThread() {
+        return isRunMainThread;
+    }
 
     public String getTaskId() {
         return taskId;
@@ -130,6 +135,9 @@ public class TaskInfo implements DownloadObserable, Serializable {
         private String                 directory;
         //文件名字
         private String                 fileName;
+        //是否在主线程运行
+        private boolean isRunMainThread;
+
         private List<DownloadObserver> observers;
 
         public Builder(String url, String directory) {
@@ -147,15 +155,20 @@ public class TaskInfo implements DownloadObserable, Serializable {
             this.observers.add(observer);
             return this;
         }
+       public Builder runMain(boolean isRunMainThread){
+           this.isRunMainThread = isRunMainThread;
+           return this;
+       }
 
         public TaskInfo build() {
-            TaskInfo taskInfo = new TaskInfo();
-            taskInfo.taskId = UUIDutils.uuid();
-            taskInfo.url = this.url;
-            taskInfo.directory = this.directory;
-            taskInfo.fileName = this.fileName;
-            taskInfo.observers = this.observers;
-            return taskInfo;
+            TaskInfo downLoadBean = new TaskInfo();
+            downLoadBean.taskId = UUIDutils.uuid();
+            downLoadBean.url = this.url;
+            downLoadBean.directory = this.directory;
+            downLoadBean.fileName = this.fileName;
+            downLoadBean.observers = this.observers;
+            downLoadBean.isRunMainThread = this.isRunMainThread;
+            return downLoadBean;
         }
     }
 

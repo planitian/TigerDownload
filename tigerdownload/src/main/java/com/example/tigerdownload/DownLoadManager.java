@@ -14,6 +14,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
+
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
@@ -185,13 +187,12 @@ public class DownLoadManager {
     private Disposable download(DownLoadService service, TaskInfo taskInfo) {
 
         Disposable disposable = service.download("bytes=" + taskInfo.getReadLength() + "-", taskInfo.getUrl())
-                .subscribeOn(Schedulers.io())
-                .unsubscribeOn(Schedulers.io())
                 .retryWhen(new RetryWhenNetworkException())
                 .map(new Function<Response<ResponseBody>, TaskInfo>() {
                     @Override
                     public TaskInfo apply(Response<ResponseBody> response) throws Exception {
                         try {
+                            System.out.println(">>>>>>>>>map "+Thread.currentThread().getName());
                             okhttp3.Response responseOkHttp = response.raw();
                             //从下载url中解析出文件名字
                             String fileName = ValidFileName.fileName(taskInfo.getUrl());
@@ -248,7 +249,12 @@ public class DownLoadManager {
                         }
                         return taskInfo;
                     }
-                }).subscribe(taskInfoEnd -> {
+                })
+                .subscribeOn(Schedulers.io())
+                .unsubscribeOn(Schedulers.io())
+                .observeOn(taskInfo.isRunMainThread()?AndroidSchedulers.mainThread():Schedulers.computation())
+                .subscribe(taskInfoEnd -> {
+                    System.out.println(">>>>>>>>>taskInfoEnd "+Thread.currentThread().getName());
                     disposableMap.remove(taskInfo.getTaskId());
                     if (taskInfoEnd.getReadLength() < taskInfoEnd.getContentLength()) {
                         downloadMap.get(taskInfo.getTaskId()).setReadLength(taskInfoEnd.getReadLength());
@@ -263,6 +269,7 @@ public class DownLoadManager {
                         waitQueueStart();
                     }
                 }, throwable -> {
+                    System.out.println(">>>>>>>>>throwable "+Thread.currentThread().getName());
                     Log.d(TAG,       "下载过程异常  id :"+ taskInfo.getTaskId()+" 已读长度 "+taskInfo.getReadLength()+" case: "+throwable.toString());
                     //下载出现异常  更改状态 通知观察者
                     disposableMap.remove(taskInfo.getTaskId());
