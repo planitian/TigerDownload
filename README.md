@@ -35,10 +35,10 @@ String url = "https://uu.gdl.netease.com/2183/UU-2.10.5.exe";
 //文件保存目录
 String savePath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + Environment.DIRECTORY_DOWNLOADS;  
 TaskInfo downLoadBean = new TaskInfo.Builder(url, savePath)  
-        //注册观察者  
+   //注册观察者  
   .registerObserver(new DownloadObserver() {  
   
-            //taskinfo  携带着下载的信息，如已经读取的字节数，总文件长度（如果，http返回了 文件长度）  
+  //taskinfo  携带着下载的信息，如已经读取的字节数，总文件长度（如果，http返回了 文件长度）  
  //下载状态@Link{ DownloadState } @Override  
   public void update(TaskInfo downLoadBean) {  
   
