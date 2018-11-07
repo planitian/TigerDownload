@@ -7,6 +7,7 @@
  2. **自动重连机制**
  3. **写入文件方法，根据返回流的不同，写入方式多样性**
  4. **可以获得下载速度，下载进度**
+ 5. **断点续传**
  
 # 配置教程
  5. Add the JitPack repository to your build file（将JitPack存储库添加到构建文件中）**注意  是project的build.gradle文件**
