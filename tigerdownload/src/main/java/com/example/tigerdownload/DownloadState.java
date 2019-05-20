@@ -6,13 +6,6 @@ package com.example.tigerdownload;
  * @author plani
  */
 public enum DownloadState{
-
-
-    /**
-     * 任务建立 但没有开始
-     */
-    STATE_NORMAL,
-
     /**
      * 新任务建立
      */
@@ -34,11 +27,6 @@ public enum DownloadState{
     STATE_PAUSE,
 
     /**
-     * 更新
-     */
-    STATE_UPDATE,
-
-    /**
      * 下载完成
      */
     STATE_FINISH,
@@ -46,13 +34,6 @@ public enum DownloadState{
      * 下载失败
      */
     STATE_ERROR,
-    /**
-     * 安装失败
-     */
-    STATE_INSTALL_ERROR,
-    /**
-     * 安装成功
-     */
-    STATE_INSTALL_SUCCESS;
+
 
 }

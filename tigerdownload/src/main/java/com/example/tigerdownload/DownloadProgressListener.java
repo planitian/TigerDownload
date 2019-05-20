@@ -6,6 +6,7 @@ package com.example.tigerdownload;
  *
  * @author plani
  */
+@Deprecated
 public interface DownloadProgressListener {
 
     /**
