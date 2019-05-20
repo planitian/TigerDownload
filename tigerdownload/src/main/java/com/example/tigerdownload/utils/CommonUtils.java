@@ -1,5 +1,7 @@
 package com.example.tigerdownload.utils;
 
+import android.os.Handler;
+
 import java.io.File;
 
 import java.io.PrintWriter;
@@ -10,6 +12,15 @@ import java.util.Date;
 import java.util.Locale;
 
 public class CommonUtils {
+
+    /**
+     * 持有主线程的引用
+     */
+    private static Handler mainHandler = new Handler();
+
+    public static Handler getMainHandler() {
+        return mainHandler;
+    }
 
     // 静默安装  网上
     public static boolean clientInstall(String apkPath) {

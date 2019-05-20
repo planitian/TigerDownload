@@ -1,6 +1,7 @@
 package com.example.tigerdownload;
 
 import com.example.tigerdownload.bean.TaskInfo;
+import com.example.tigerdownload.utils.CommonUtils;
 
 import java.io.IOException;
 
@@ -68,11 +69,16 @@ public class DownLoadResponseBody extends ResponseBody {
                             downLoadBean.setContentLength(responseBody.contentLength());
                             downLoadBean.setDownloadState(DownloadState.STATE_lOADING);
                             updateDownloadSpeed(downLoadBean);
-                            DownLoadManager.getInstance().notifyObserver(downLoadBean);
+//                            DownLoadManager.getInstance().notifyObserver(downLoadBean);
                         } else {
                             downLoadBean.setReadLength(lastReadLength + totalBytesRead);
                             downLoadBean.setDownloadState(DownloadState.STATE_lOADING);
                             updateDownloadSpeed(downLoadBean);
+                        }
+                        if (downLoadBean.isRunMainThread()){
+                            //回调在主线程调用
+                            CommonUtils.getMainHandler().post(() -> DownLoadManager.getInstance().notifyObserver(downLoadBean));
+                        }else {
                             DownLoadManager.getInstance().notifyObserver(downLoadBean);
                         }
                     }
