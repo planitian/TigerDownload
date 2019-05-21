@@ -1,6 +1,8 @@
 package com.example.tigerdownload.utils;
 
 import android.os.Handler;
+import android.os.Looper;
+import android.support.annotation.MainThread;
 
 import java.io.File;
 
@@ -16,7 +18,7 @@ public class CommonUtils {
     /**
      * 持有主线程的引用
      */
-    private static Handler mainHandler = new Handler();
+    private static Handler mainHandler = new Handler(Looper.getMainLooper());
 
     public static Handler getMainHandler() {
         return mainHandler;
