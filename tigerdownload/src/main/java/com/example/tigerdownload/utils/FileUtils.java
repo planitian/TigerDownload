@@ -77,7 +77,7 @@ public class FileUtils {
     //普通下载  不知道文件确切长度的情况下
     private static void normalWrite(ResponseBody responseBody, File file, TaskInfo info) throws IOException {
         BufferedInputStream bufferedInputStream = new BufferedInputStream(responseBody.byteStream());
-        BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(file,true));
+        BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(file,false));
         Log.d(TAG, "normalWrite: " + bufferedInputStream.available());
         byte[] temp = new byte[1024];
         int len;
