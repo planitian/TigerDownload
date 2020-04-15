@@ -67,6 +67,6 @@ DownLoadManager.getInstance().addTask(downLoadBean).startTask(downLoadBean);
  9. isAddTask(String taskId)   查询当前任务是否被添加 即addTask
 
 
-**作者联系方式 QQ：596971449** 
+
 
 
